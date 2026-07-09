@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.users import router as user_router
 from app.db.database import create_tables
 
+from fastapi import Depends
+from app.core.auth import verify_token
+
 # Import models so SQLAlchemy registers them
 from app.models import Coffee, Order, OrderItem, User
 
@@ -34,4 +37,13 @@ app.include_router(user_router)
 def root():
     return {
         "message": "Coffee Shop API Running"
+    }
+
+@app.get("/profile")
+def profile(
+    email: str = Depends(verify_token)
+):
+    return {
+        "message": "Welcome!",
+        "email": email
     }
