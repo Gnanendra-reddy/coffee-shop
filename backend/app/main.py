@@ -1,36 +1,20 @@
 from fastapi import FastAPI
-from sqlalchemy import text
 
-from app.db.database import engine
+from app.db.database import create_tables
 
-app = FastAPI(
-    title="Coffee Shop API",
-    version="1.0.0",
-)
+# Import models so SQLAlchemy registers them
+from app.models import Coffee, Order, OrderItem, User
+
+app = FastAPI(title="Coffee Shop API")
+
+
+@app.on_event("startup")
+def startup():
+    create_tables()
 
 
 @app.get("/")
 def root():
-    return {"message": "Coffee Shop API is running"}
-
-
-@app.get("/health")
-def health():
-    return {"status": "Healthy"}
-
-
-@app.get("/db-check")
-def database_check():
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-
-        return {
-            "database": "Connected successfully"
-        }
-
-    except Exception as error:
-        return {
-            "database": "Connection failed",
-            "error": str(error)
-        }
+    return {
+        "message": "Coffee Shop API Running"
+    }
