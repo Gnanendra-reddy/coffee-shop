@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.users import router as user_router
 from app.db.database import create_tables
 
+from app.api.coffee import router as coffee_router
+
 from fastapi import Depends
 from app.core.auth import verify_token
 
@@ -32,6 +34,7 @@ app.add_middleware(
 
 app.include_router(user_router)
 
+app.include_router(coffee_router)
 
 @app.get("/")
 def root():
