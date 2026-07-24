@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.schemas.coffee import CoffeeCreate, CoffeeResponse
+
+from app.core.auth import require_admin
+
 from app.services.coffee_service import (
     create_coffee,
     get_all_coffees,
@@ -16,9 +19,11 @@ router = APIRouter(
 
 
 @router.post("/", response_model=CoffeeResponse)
+
 def add_coffee(
     coffee: CoffeeCreate,
     db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
 ):
     return create_coffee(db, coffee)
 
