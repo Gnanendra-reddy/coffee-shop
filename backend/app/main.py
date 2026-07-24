@@ -6,6 +6,8 @@ from app.db.database import create_tables
 
 from app.api.coffee import router as coffee_router
 
+from app.api.orders import router as order_router
+
 from fastapi import Depends
 from app.core.auth import verify_token
 
@@ -35,6 +37,8 @@ app.add_middleware(
 app.include_router(user_router)
 
 app.include_router(coffee_router)
+
+app.include_router(order_router)
 
 @app.get("/")
 def root():
