@@ -10,6 +10,7 @@ from app.schemas.payment import PaymentCreate
 def create_payment(
     db: Session,
     payment_data: PaymentCreate,
+    current_user,
 ):
     order = (
         db.query(Order)
@@ -29,6 +30,11 @@ def create_payment(
         raise ValueError(
             "Cannot pay for a cancelled order"
         )
+
+    if order.user_id != current_user.id:
+        raise PermissionError(
+            "You can only pay for your own orders"
+        )
     payment = Payment(
         order_id=order.id,
         amount=order.total_amount,
@@ -44,3 +50,45 @@ def create_payment(
     db.refresh(payment)
 
     return payment
+
+def get_my_payments(
+    db: Session,
+    user_id: int,
+):
+    return (
+        db.query(Payment)
+        .join(Order)
+        .filter(Order.user_id == user_id)
+        .all()
+    )
+
+def get_payment(
+    db: Session,
+    payment_id: int,
+    current_user,
+):
+    payment = (
+        db.query(Payment)
+        .filter(Payment.id == payment_id)
+        .first()
+    )
+
+    if payment is None:
+        return None
+
+    # Allow admins to view any payment
+    if current_user.role != "admin":
+        if payment.order.user_id != current_user.id:
+            raise PermissionError(
+                "Access denied"
+            )
+
+    return payment
+
+def get_all_payments(
+    db: Session,
+):
+    return (
+        db.query(Payment)
+        .all()
+    )

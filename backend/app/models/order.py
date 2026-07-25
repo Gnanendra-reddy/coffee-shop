@@ -27,7 +27,7 @@ class Order(Base):
     )
 
     payment = relationship(
-    "Payment",
-    back_populates="order",
-    uselist=False,
+        "Payment",
+        back_populates="order",
+        uselist=False,
     )
