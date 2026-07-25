@@ -11,6 +11,8 @@ from app.api.orders import router as order_router
 from fastapi import Depends
 from app.core.auth import verify_token
 
+from app.api.payments import router as payment_router
+
 # Import models so SQLAlchemy registers them
 from app.models import Coffee, Order, OrderItem, User
 
@@ -39,6 +41,8 @@ app.include_router(user_router)
 app.include_router(coffee_router)
 
 app.include_router(order_router)
+
+app.include_router(payment_router)
 
 @app.get("/")
 def root():
