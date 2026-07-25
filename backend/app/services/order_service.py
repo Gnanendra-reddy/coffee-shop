@@ -60,3 +60,70 @@ def create_order(
     db.refresh(order)
 
     return order
+
+def get_user_orders(
+    db: Session,
+    user_id: int,
+):
+    return (
+        db.query(Order)
+        .filter(Order.user_id == user_id)
+        .all()
+    )
+
+def get_all_orders(db: Session):
+    return db.query(Order).all()
+
+def update_order_status(
+    db: Session,
+    order_id: int,
+    status: str,
+):
+    order = (
+        db.query(Order)
+        .filter(Order.id == order_id)
+        .first()
+    )
+
+    if order is None:
+        return None
+
+    order.status = status
+
+    db.commit()
+    db.refresh(order)
+
+    return order
+
+def cancel_order(
+    db: Session,
+    order_id: int,
+):
+    order = (
+        db.query(Order)
+        .filter(Order.id == order_id)
+        .first()
+    )
+
+    if order is None:
+        return None
+
+    # Prevent cancelling twice
+    if order.status == "Cancelled":
+        raise ValueError("Order is already cancelled")
+
+    # Restore stock
+    for item in order.items:
+
+        coffee = item.coffee
+
+        if coffee:
+            coffee.stock += item.quantity
+
+    order.status = "Cancelled"
+
+    db.commit()
+
+    db.refresh(order)
+
+    return order

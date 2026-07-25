@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-
+from typing import Literal
 class OrderItemCreate(BaseModel):
     coffee_id: int
     quantity: int
@@ -27,3 +27,12 @@ class OrderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class OrderStatusUpdate(BaseModel):
+    status: Literal[
+        "Pending",
+        "Preparing",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled",
+    ]

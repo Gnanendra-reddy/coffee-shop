@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String
 
+from sqlalchemy.orm import relationship
+
 from app.db.database import Base
 
 
@@ -17,3 +19,8 @@ class User(Base):
     phone = Column(String, nullable=True)
 
     role = Column(String, default="customer")
+
+    orders = relationship(
+    "Order",
+    back_populates="user",
+    )

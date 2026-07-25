@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Float, Integer, String
 
+from sqlalchemy.orm import relationship
+
 from app.db.database import Base
 
 
@@ -19,3 +21,8 @@ class Coffee(Base):
     stock = Column(Integer)
 
     image_url = Column(String)
+
+    order_items = relationship(
+    "OrderItem",
+    back_populates="coffee",
+    )
