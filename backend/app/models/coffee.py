@@ -6,7 +6,7 @@ from app.db.database import Base
 
 
 class Coffee(Base):
-    __tablename__ = "coffee"
+    __tablename__ = "coffees"
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -23,6 +23,11 @@ class Coffee(Base):
     image_url = Column(String)
 
     order_items = relationship(
-    "OrderItem",
-    back_populates="coffee",
+        "OrderItem",
+        back_populates="coffee",
+    )
+
+    cart_items = relationship(
+        "CartItem",
+        back_populates="coffee",
     )

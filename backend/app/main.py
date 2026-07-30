@@ -13,8 +13,18 @@ from app.core.auth import verify_token
 
 from app.api.payments import router as payment_router
 
+from app.api.cart import router as cart_router
+
 # Import models so SQLAlchemy registers them
-from app.models import Coffee, Order, OrderItem, User
+from app.models import (
+    Coffee,
+    Order,
+    OrderItem,
+    User,
+    Payment,
+    Cart,
+    CartItem,
+)
 
 app = FastAPI(title="Coffee Shop API")
 
@@ -43,6 +53,8 @@ app.include_router(coffee_router)
 app.include_router(order_router)
 
 app.include_router(payment_router)
+
+app.include_router(cart_router)
 
 @app.get("/")
 def root():

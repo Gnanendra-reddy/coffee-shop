@@ -11,7 +11,7 @@ class OrderItem(Base):
 
     order_id = Column(Integer, ForeignKey("orders.id"))
 
-    coffee_id = Column(Integer, ForeignKey("coffee.id"))
+    coffee_id = Column(Integer, ForeignKey("coffees.id"))
 
     quantity = Column(Integer)
 

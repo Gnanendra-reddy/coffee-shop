@@ -21,6 +21,12 @@ class User(Base):
     role = Column(String, default="customer")
 
     orders = relationship(
-    "Order",
-    back_populates="user",
+        "Order",
+        back_populates="user",
+    )
+
+    cart = relationship(
+        "Cart",
+        back_populates="user",
+        uselist=False,
     )
