@@ -8,3 +8,4 @@ from .cart_item import CartItem
 from .review import Review
 from .coupon import Coupon
 from .coupon_usage import CouponUsage
+from .wishlist import Wishlist

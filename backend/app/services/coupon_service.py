@@ -23,6 +23,14 @@ def create_coupon(
             "Coupon already exists"
         )
 
+    if (
+        coupon.discount_type == "percentage"
+        and coupon.value > 100
+    ):
+        raise ValueError(
+            "Percentage discount cannot exceed 100"
+        )
+
     new_coupon = Coupon(
         code=coupon.code,
         discount_type=coupon.discount_type,

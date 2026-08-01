@@ -36,3 +36,8 @@ class Coffee(Base):
         "Review",
         back_populates="coffee",
     )
+
+    wishlisted_by = relationship(
+        "Wishlist",
+        back_populates="coffee",
+    )

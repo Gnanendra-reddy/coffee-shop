@@ -35,3 +35,9 @@ class User(Base):
         "Review",
         back_populates="user",
     )
+
+    wishlist_items = relationship(
+        "Wishlist",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )

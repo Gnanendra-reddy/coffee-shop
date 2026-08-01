@@ -333,4 +333,15 @@ def checkout_cart(
     db.commit()
     db.refresh(order)
 
-    return order
+    return {
+        "order_id": order.id,
+        "subtotal": total,
+        "discount": discount,
+        "final_total": order.total_amount,
+        "coupon_code": (
+            coupon.code
+            if coupon
+            else None
+        ),
+        "status": order.status,
+    }

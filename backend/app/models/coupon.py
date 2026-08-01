@@ -25,3 +25,4 @@ class Coupon(Base):
     value = Column(Float)
 
     expiry_date = Column(Date)
+

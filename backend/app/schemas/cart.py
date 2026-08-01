@@ -35,3 +35,12 @@ class CartResponse(BaseModel):
 
 class CheckoutRequest(BaseModel):
     coupon_code: str | None = None
+
+
+class CheckoutResponse(BaseModel):
+    order_id: int
+    subtotal: float
+    discount: float
+    final_total: float
+    coupon_code: str | None = None
+    status: str

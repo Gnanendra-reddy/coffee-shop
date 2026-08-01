@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal
 
 
@@ -13,7 +13,7 @@ class CouponCreate(BaseModel):
         "fixed",
     ]
 
-    value: float
+    value: float = Field(gt=0)
 
     expiry_date: date
 

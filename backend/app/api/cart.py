@@ -8,6 +8,8 @@ from app.schemas.cart import (
     CartItemCreate,
     CartItemResponse,
     CartResponse,
+    CheckoutRequest,
+    CheckoutResponse,
 )
 
 from app.schemas.order import OrderResponse
@@ -20,8 +22,6 @@ from app.services.cart_service import (
     clear_cart,
     checkout_cart,
 )
-
-from app.schemas.cart import CheckoutRequest
 
 router = APIRouter(
     prefix="/cart",
@@ -118,10 +118,10 @@ def empty_cart(
 
 @router.post(
     "/checkout",
-    response_model=OrderResponse,
+    response_model=CheckoutResponse,
 )
 def checkout(
-    checkout: CheckoutRequest,
+    checkout: CheckoutRequest | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -129,7 +129,11 @@ def checkout(
         return checkout_cart(
             db=db,
             current_user=current_user,
-            coupon_code=checkout.coupon_code,
+            coupon_code=(
+            checkout.coupon_code
+                if checkout
+                else None
+            ),
         )
 
     except ValueError as e:
