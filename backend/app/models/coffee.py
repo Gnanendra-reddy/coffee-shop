@@ -31,3 +31,8 @@ class Coffee(Base):
         "CartItem",
         back_populates="coffee",
     )
+
+    reviews = relationship(
+        "Review",
+        back_populates="coffee",
+    )

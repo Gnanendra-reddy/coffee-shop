@@ -15,6 +15,8 @@ from app.api.payments import router as payment_router
 
 from app.api.cart import router as cart_router
 
+from app.api.reviews import router as review_router
+
 # Import models so SQLAlchemy registers them
 from app.models import (
     Coffee,
@@ -55,6 +57,8 @@ app.include_router(order_router)
 app.include_router(payment_router)
 
 app.include_router(cart_router)
+
+app.include_router(review_router)
 
 @app.get("/")
 def root():

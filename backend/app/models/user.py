@@ -30,3 +30,8 @@ class User(Base):
         back_populates="user",
         uselist=False,
     )
+
+    reviews = relationship(
+        "Review",
+        back_populates="user",
+    )

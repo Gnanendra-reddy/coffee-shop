@@ -5,3 +5,4 @@ from .user import User
 from .payment import Payment
 from .cart import Cart
 from .cart_item import CartItem
+from .review import Review
