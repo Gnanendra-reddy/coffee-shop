@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from pydantic import Field
 
 
 class WishlistCreate(BaseModel):
@@ -22,4 +23,10 @@ class WishlistResponse(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True
+    )
+
+class MoveWishlistItem(BaseModel):
+    quantity: int = Field(
+        ge=1,
+        le=20,
     )

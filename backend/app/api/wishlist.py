@@ -7,11 +7,14 @@ from app.models.user import User
 from app.schemas.wishlist import (
     WishlistCreate,
     WishlistResponse,
+    MoveWishlistItem,
 )
 from app.services.wishlist_service import (
     add_to_wishlist,
     get_wishlist,
     remove_from_wishlist,
+    move_to_cart,
+    move_all_to_cart,
 )
 
 router = APIRouter(
@@ -71,5 +74,47 @@ def remove(
     except ValueError as e:
         raise HTTPException(
             status_code=404,
+            detail=str(e),
+        )
+
+
+@router.post("/{wishlist_id}/move")
+def move(
+    wishlist_id: int,
+    request: MoveWishlistItem,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+
+        return move_to_cart(
+            db=db,
+            wishlist_id=wishlist_id,
+            quantity=request.quantity,
+            current_user=current_user,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+
+@router.post("/move-all")
+def move_all(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return move_all_to_cart(
+            db,
+            current_user,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
             detail=str(e),
         )
