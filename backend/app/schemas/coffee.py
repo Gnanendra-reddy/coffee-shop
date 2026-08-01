@@ -19,6 +19,7 @@ class CoffeeUpdate(BaseModel):
 
     class Config:
         from_attributes = True
+
 class CoffeeResponse(BaseModel):
     id: int
     name: str
@@ -30,3 +31,9 @@ class CoffeeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CoffeeListResponse(BaseModel):
+    page: int
+    limit: int
+    total: int
+    data: list[CoffeeResponse]

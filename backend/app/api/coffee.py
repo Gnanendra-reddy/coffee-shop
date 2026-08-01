@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.coffee import CoffeeCreate, CoffeeResponse
 
 from app.core.auth import require_admin
 
@@ -10,6 +9,7 @@ from app.schemas.coffee import (
     CoffeeCreate,
     CoffeeResponse,
     CoffeeUpdate,
+    CoffeeListResponse,
 )
 
 from app.services.coffee_service import (
@@ -36,11 +36,29 @@ def add_coffee(
     return create_coffee(db, coffee)
 
 
-@router.get("/", response_model=list[CoffeeResponse])
+@router.get("/", response_model=CoffeeListResponse)
 def get_coffees(
+    page: int = 1,
+    limit: int = 10,
+    search: str | None = None,
+    category: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
     db: Session = Depends(get_db),
 ):
-    return get_all_coffees(db)
+    return get_all_coffees(
+        db=db,
+        page=page,
+        limit=limit,
+        search=search,
+        category=category,
+        min_price=min_price,
+        max_price=max_price,
+        sort_by=sort_by,
+        order=order,
+    )
 
 
 @router.get("/{coffee_id}", response_model=CoffeeResponse)

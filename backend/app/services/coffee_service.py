@@ -21,8 +21,69 @@ def create_coffee(db: Session, coffee: CoffeeCreate):
     return new_coffee
 
 
-def get_all_coffees(db: Session):
-    return db.query(Coffee).all()
+def get_all_coffees(
+    db: Session,
+    page: int = 1,
+    limit: int = 10,
+    search: str | None = None,
+    category: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
+):
+    query = db.query(Coffee)
+
+    if search:
+        query = query.filter(
+            Coffee.name.ilike(f"%{search}%")
+        )
+
+    if category:
+        query = query.filter(
+            Coffee.category == category
+        )
+
+    if min_price is not None:
+        query = query.filter(
+            Coffee.price >= min_price
+        )
+
+    if max_price is not None:
+        query = query.filter(
+            Coffee.price <= max_price
+        )
+
+    sort_column = getattr(
+        Coffee,
+        sort_by,
+        Coffee.id,
+    )
+
+    if order.lower() == "desc":
+        query = query.order_by(
+            sort_column.desc()
+        )
+    else:
+        query = query.order_by(
+            sort_column.asc()
+        )
+
+    total = query.count()
+
+    coffees = (
+        query.offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "data": coffees,
+    }
+
 
 
 def get_coffee_by_id(db: Session, coffee_id: int):
