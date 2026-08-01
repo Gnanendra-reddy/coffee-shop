@@ -21,6 +21,8 @@ from app.services.cart_service import (
     checkout_cart,
 )
 
+from app.schemas.cart import CheckoutRequest
+
 router = APIRouter(
     prefix="/cart",
     tags=["Cart"],
@@ -119,13 +121,15 @@ def empty_cart(
     response_model=OrderResponse,
 )
 def checkout(
+    checkout: CheckoutRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     try:
         return checkout_cart(
-            db,
-            current_user,
+            db=db,
+            current_user=current_user,
+            coupon_code=checkout.coupon_code,
         )
 
     except ValueError as e:

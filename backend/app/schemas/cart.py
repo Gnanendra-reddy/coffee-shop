@@ -31,3 +31,7 @@ class CartItemResponse(BaseModel):
 class CartResponse(BaseModel):
     items: list[CartItemResponse]
     total: float
+
+
+class CheckoutRequest(BaseModel):
+    coupon_code: str | None = None

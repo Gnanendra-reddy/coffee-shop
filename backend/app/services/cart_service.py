@@ -9,6 +9,11 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.coffee import Coffee
 
+
+from datetime import date
+from app.models.coupon import Coupon
+from app.models.coupon_usage import CouponUsage
+
 def add_to_cart(
     db: Session,
     cart_item: CartItemCreate,
@@ -204,6 +209,7 @@ def clear_cart(
 def checkout_cart(
     db: Session,
     current_user,
+    coupon_code: str | None = None,
 ):
     cart = (
         db.query(Cart)
@@ -215,6 +221,44 @@ def checkout_cart(
         raise ValueError("Cart is empty")
 
     total = 0
+
+    discount = 0
+
+    coupon = None
+
+    if coupon_code:
+
+        coupon = (
+            db.query(Coupon)
+            .filter(
+                Coupon.code == coupon_code
+            )
+            .first()
+        )
+
+        if coupon is None:
+            raise ValueError(
+                "Invalid coupon"
+            )
+
+        if coupon.expiry_date < date.today():
+            raise ValueError(
+                "Coupon expired"
+            )
+
+        used = (
+            db.query(CouponUsage)
+            .filter(
+                CouponUsage.coupon_id == coupon.id,
+                CouponUsage.user_id == current_user.id,
+            )
+            .first()
+        )
+
+        if used:
+            raise ValueError(
+                "Coupon already used"
+            )
 
     order = Order(
         user_id=current_user.id,
@@ -255,6 +299,30 @@ def checkout_cart(
         db.add(order_item)
 
     order.total_amount = total
+
+    if coupon:
+
+        if coupon.discount_type == "percentage":
+
+            discount = (
+                total * coupon.value
+            ) / 100
+
+        else:
+
+            discount = coupon.value
+
+        if discount > total:
+            discount = total
+
+        order.total_amount = total - discount
+
+        usage = CouponUsage(
+            coupon_id=coupon.id,
+            user_id=current_user.id,
+        )
+
+        db.add(usage)
 
     (
         db.query(CartItem)
