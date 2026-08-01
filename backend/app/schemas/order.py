@@ -36,3 +36,12 @@ class OrderStatusUpdate(BaseModel):
         "Delivered",
         "Cancelled",
     ]
+
+class OrderStatusUpdate(BaseModel):
+
+    status: Literal[
+        "Preparing",
+        "Ready",
+        "Out for Delivery",
+        "Delivered",
+    ]

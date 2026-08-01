@@ -13,7 +13,11 @@ class Order(Base):
 
     total_amount = Column(Float)
 
-    status = Column(String, default="Pending")
+    status = Column(
+        String, 
+        default="Pending",
+        nullable=False,
+    )
 
     user = relationship(
         "User",
@@ -30,4 +34,10 @@ class Order(Base):
         "Payment",
         back_populates="order",
         uselist=False,
+    )
+
+    history = relationship(
+        "OrderHistory",
+        back_populates="order",
+        cascade="all, delete-orphan",
     )

@@ -21,6 +21,11 @@ from app.services.order_service import (
     get_all_orders,
     update_order_status,
     cancel_order,
+    get_order_history,
+)
+
+from app.schemas.order_history import (
+    OrderHistoryResponse,
 )
 
 router = APIRouter(
@@ -29,7 +34,10 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=OrderResponse)
+@router.post(
+    "/",
+    response_model=OrderResponse,
+)
 def place_order(
     order: OrderCreate,
     db: Session = Depends(get_db),
@@ -41,13 +49,18 @@ def place_order(
             current_user.id,
             order,
         )
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
 
-@router.get("/my-orders", response_model=list[OrderResponse])
+
+@router.get(
+    "/my-orders",
+    response_model=list[OrderResponse],
+)
 def my_orders(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -57,7 +70,11 @@ def my_orders(
         current_user.id,
     )
 
-@router.get("/", response_model=list[OrderResponse])
+
+@router.get(
+    "/",
+    response_model=list[OrderResponse],
+)
 def all_orders(
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
@@ -65,49 +82,71 @@ def all_orders(
     return get_all_orders(db)
 
 
-@router.put("/{order_id}/status", response_model=OrderResponse)
-def change_order_status(
+@router.put(
+    "/{order_id}/status",
+    response_model=OrderResponse,
+)
+def update_status(
     order_id: int,
-    order_status: OrderStatusUpdate,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
-):
-    order = update_order_status(
-        db,
-        order_id,
-        order_status.status,
-    )
-
-    if order is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Order not found",
-        )
-
-    return order
-
-
-@router.put("/{order_id}/cancel", response_model=OrderResponse)
-def cancel_existing_order(
-    order_id: int,
+    status: OrderStatusUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
     try:
-        order = cancel_order(
+
+        return update_order_status(
             db,
             order_id,
+            status.status,
         )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+
+
+@router.put(
+    "/{order_id}/cancel",
+    response_model=OrderResponse,
+)
+def cancel(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return cancel_order(
+            db,
+            order_id,
+            current_user,
+        )
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
 
-    if order is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Order not found",
+@router.get(
+    "/{order_id}/history",
+    response_model=list[OrderHistoryResponse],
+)
+def history(
+    order_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return get_order_history(
+            db,
+            order_id,
         )
 
-    return order
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )

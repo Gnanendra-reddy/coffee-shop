@@ -5,6 +5,13 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.schemas.order import OrderCreate
 
+from app.core.order_status import (
+    VALID_STATUS_FLOW,
+    PENDING,
+    CANCELLED,
+)
+
+from app.models.order_history import OrderHistory
 
 def create_order(
     db: Session,
@@ -14,10 +21,10 @@ def create_order(
     total = 0
 
     order = Order(
-    user_id=user_id,
-    total_amount=0,
-    status="Pending",
-)
+        user_id=user_id,
+        total_amount=0,
+        status=PENDING,
+    )
 
     db.add(order)
     db.flush()
@@ -61,6 +68,7 @@ def create_order(
 
     return order
 
+
 def get_user_orders(
     db: Session,
     user_id: int,
@@ -71,13 +79,17 @@ def get_user_orders(
         .all()
     )
 
-def get_all_orders(db: Session):
+
+def get_all_orders(
+    db: Session,
+):
     return db.query(Order).all()
+
 
 def update_order_status(
     db: Session,
     order_id: int,
-    status: str,
+    new_status: str,
 ):
     order = (
         db.query(Order)
@@ -86,16 +98,81 @@ def update_order_status(
     )
 
     if order is None:
-        return None
+        raise ValueError(
+            "Order not found"
+        )
 
-    order.status = status
+    if not can_change_status(
+        order.status,
+        new_status,
+    ):
+        raise ValueError(
+            f"Cannot change status from "
+            f"{order.status} to {new_status}"
+        )
+
+    order.status = new_status
+
+    history = OrderHistory(
+        order_id=order.id,
+        status=new_status,
+    )
+
+    db.add(history)
 
     db.commit()
+
     db.refresh(order)
 
     return order
 
+
+def can_change_status(
+    current_status: str,
+    new_status: str,
+):
+    allowed = VALID_STATUS_FLOW.get(
+        current_status,
+        [],
+    )
+
+    return new_status in allowed
+
+
 def cancel_order(
+    db: Session,
+    order_id: int,
+    current_user,
+):
+    order = (
+        db.query(Order)
+        .filter(
+            Order.id == order_id,
+            Order.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if order is None:
+        raise ValueError(
+            "Order not found"
+        )
+
+    if order.status != PENDING:
+        raise ValueError(
+            "Order cannot be cancelled"
+        )
+
+    order.status = CANCELLED
+
+    db.commit()
+
+    db.refresh(order)
+
+    return order
+
+
+def get_order_history(
     db: Session,
     order_id: int,
 ):
@@ -106,24 +183,8 @@ def cancel_order(
     )
 
     if order is None:
-        return None
+        raise ValueError(
+            "Order not found"
+        )
 
-    # Prevent cancelling twice
-    if order.status == "Cancelled":
-        raise ValueError("Order is already cancelled")
-
-    # Restore stock
-    for item in order.items:
-
-        coffee = item.coffee
-
-        if coffee:
-            coffee.stock += item.quantity
-
-    order.status = "Cancelled"
-
-    db.commit()
-
-    db.refresh(order)
-
-    return order
+    return order.history

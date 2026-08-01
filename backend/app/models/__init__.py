@@ -9,3 +9,4 @@ from .review import Review
 from .coupon import Coupon
 from .coupon_usage import CouponUsage
 from .wishlist import Wishlist
+from .order_history import OrderHistory
