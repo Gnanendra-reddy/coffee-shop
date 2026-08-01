@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.cart import (
     CartItemCreate,
     CartItemResponse,
+    CartResponse,
 )
 
 from app.schemas.order import OrderResponse
@@ -51,7 +52,7 @@ def add_item(
 
 @router.get(
     "/",
-    response_model=list[CartItemResponse],
+    response_model = CartResponse,
 )
 def view_cart(
     db: Session = Depends(get_db),

@@ -56,8 +56,16 @@ def add_to_cart(
 
     db.commit()
     db.refresh(existing_item)
+    db.refresh(existing_item, attribute_names=["coffee"])
 
-    return existing_item
+    subtotal = existing_item.quantity * existing_item.coffee.price
+
+    return {
+    "id": existing_item.id,
+    "coffee": existing_item.coffee,
+    "quantity": existing_item.quantity,
+    "subtotal": subtotal,
+    }
 
 def get_cart(
     db: Session,
@@ -70,10 +78,34 @@ def get_cart(
     )
 
     if cart is None:
-        return []
+        return {
+            "items": [],
+            "total": 0,
+        }
 
-    return cart.items
+    response = []
+    total = 0
 
+    for item in cart.items:
+
+        subtotal = item.quantity * item.coffee.price
+
+        total += subtotal
+
+        response.append(
+            {
+                "id": item.id,
+                "coffee": item.coffee,
+                "quantity": item.quantity,
+                "subtotal": subtotal,
+            }
+        )
+
+
+    return {
+    "items": response,
+    "total": total,
+    }
 
 
 def update_cart_item(
