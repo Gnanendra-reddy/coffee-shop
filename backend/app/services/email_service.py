@@ -6,6 +6,13 @@ from app.core.email import (
     MessageType,
 )
 
+from app.core.email_tokens import (
+    create_email_verification_token,
+)
+
+from app.core.password_reset import (
+    create_password_reset_token,
+)
 
 def send_welcome_email(
     background_tasks: BackgroundTasks,
@@ -142,6 +149,113 @@ def send_payment_confirmation_email(
 
                 <p>
                     ☕ Coffee Shop Team
+                </p>
+            </body>
+        </html>
+        """,
+        subtype=MessageType.html,
+    )
+
+    background_tasks.add_task(
+        mail.send_message,
+        message,
+    )
+
+
+def send_verification_email(
+    background_tasks: BackgroundTasks,
+    email: str,
+    full_name: str,
+):
+    token = create_email_verification_token(
+        email
+    )
+
+    verification_url = (
+        "http://localhost:5173/"
+        f"verify-email?token={token}"
+    )
+
+    message = MessageSchema(
+        subject="Verify Your Coffee Shop Email",
+        recipients=[email],
+        body=f"""
+        <html>
+            <body>
+                <h2>
+                    Hello {full_name}!
+                </h2>
+
+                <p>
+                    Please verify your email
+                    address to activate your account.
+                </p>
+
+                <p>
+                    <a href="{verification_url}">
+                        Verify Email
+                    </a>
+                </p>
+
+                <p>
+                    This link expires in 30 minutes.
+                </p>
+
+                <p>
+                    ☕ Coffee Shop Team
+                </p>
+            </body>
+        </html>
+        """,
+        subtype=MessageType.html,
+    )
+
+    background_tasks.add_task(
+        mail.send_message,
+        message,
+    )
+
+def send_password_reset_email(
+    background_tasks: BackgroundTasks,
+    email: str,
+):
+    token = create_password_reset_token(
+        email
+    )
+
+    reset_url = (
+        "http://localhost:5173/"
+        f"reset-password?token={token}"
+    )
+
+    message = MessageSchema(
+        subject="Reset Your Coffee Shop Password",
+        recipients=[email],
+        body=f"""
+        <html>
+            <body>
+                <h2>
+                    Password Reset
+                </h2>
+
+                <p>
+                    We received a request to reset
+                    your Coffee Shop password.
+                </p>
+
+                <p>
+                    <a href="{reset_url}">
+                        Reset Password
+                    </a>
+                </p>
+
+                <p>
+                    This link expires in 15 minutes.
+                </p>
+
+                <p>
+                    If you didn't request this,
+                    you can safely ignore this email.
                 </p>
             </body>
         </html>

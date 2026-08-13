@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String
 
 from sqlalchemy.orm import relationship
 
@@ -40,4 +40,10 @@ class User(Base):
         "Wishlist",
         back_populates="user",
         cascade="all, delete-orphan",
+    )
+
+    email_verified = Column(
+            Boolean,
+            default=False,
+            nullable=False,
     )
