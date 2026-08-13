@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    BackgroundTasks, 
+    Depends, 
+    HTTPException,
+)
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -9,11 +14,19 @@ from app.core.auth import create_access_token
 from app.schemas.user import Token, UserLogin
 from app.utils.security import verify_password
 
+from app.services.email_service import (
+    send_welcome_email,
+)
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.post("/register", response_model=UserResponse)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+def register_user(
+    user: UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     existing_user = db.query(User).filter(User.email == user.email).first()
 
     if existing_user:
@@ -32,6 +45,12 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    send_welcome_email(
+        background_tasks,
+        new_user.email,
+        new_user.full_name,
+    )
 
     return new_user
 

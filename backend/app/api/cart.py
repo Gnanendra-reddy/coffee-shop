@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi import BackgroundTasks
 
 from app.core.auth import get_current_user
 from app.db.database import get_db
@@ -21,6 +22,10 @@ from app.services.cart_service import (
     remove_cart_item,
     clear_cart,
     checkout_cart,
+)
+
+from app.services.email_service import (
+    send_order_confirmation_email,
 )
 
 router = APIRouter(
@@ -121,12 +126,13 @@ def empty_cart(
     response_model=CheckoutResponse,
 )
 def checkout(
+    background_tasks: BackgroundTasks,
     checkout: CheckoutRequest | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return checkout_cart(
+        result =  checkout_cart(
             db=db,
             current_user=current_user,
             coupon_code=(
@@ -136,6 +142,15 @@ def checkout(
             ),
         )
 
+        send_order_confirmation_email(
+            background_tasks,
+            current_user.email,
+            result["order_id"],
+            result["final_total"],
+        )
+
+        return result
+    
     except ValueError as e:
         raise HTTPException(
             status_code=400,
