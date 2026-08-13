@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.user import User
 from app.utils.security import hash_password
-from app.core.auth import create_access_token
+from app.core.auth import create_access_token, get_current_user
 
 from app.schemas.user import (
     Token, 
@@ -17,6 +17,10 @@ from app.schemas.user import (
     UserCreate, 
     UserResponse,
     UserLogin,
+    ProfileResponse,
+    ProfileUpdate,
+    ChangePasswordRequest,
+    DeleteAccountRequest,
     EmailVerificationRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
@@ -33,6 +37,12 @@ from app.services.user_service import (
     verify_email,
     request_password_reset,
     reset_password,
+)
+
+from app.services.profile_service import (
+    update_profile,
+    change_password,
+    deactivate_account,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -172,6 +182,86 @@ def reset_user_password(
             db,
             request.token,
             request.new_password,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/me",
+    response_model=ProfileResponse,
+)
+def get_my_profile(
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    return current_user
+
+
+@router.put(
+    "/me",
+    response_model=ProfileResponse,
+)
+def update_my_profile(
+    data: ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    return update_profile(
+        db,
+        current_user,
+        data,
+    )
+
+
+
+@router.put(
+    "/me/password",
+)
+def change_my_password(
+    data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    try:
+        return change_password(
+            db,
+            current_user,
+            data.current_password,
+            data.new_password,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+
+@router.delete(
+    "/me",
+)
+def delete_my_account(
+    data: DeleteAccountRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    try:
+        return deactivate_account(
+            db,
+            current_user,
+            data.password,
         )
 
     except ValueError as e:

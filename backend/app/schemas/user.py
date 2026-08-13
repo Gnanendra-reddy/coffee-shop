@@ -35,3 +35,26 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class ProfileResponse(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    phone: str | None = None
+    role: str
+    email_verified: bool
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+class ProfileUpdate(BaseModel):
+    full_name: str | None = None
+    phone: str | None = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+class DeleteAccountRequest(BaseModel):
+    password: str

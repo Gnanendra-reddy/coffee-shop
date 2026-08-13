@@ -47,3 +47,9 @@ class User(Base):
             default=False,
             nullable=False,
     )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
