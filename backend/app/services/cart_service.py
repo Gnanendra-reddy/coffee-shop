@@ -7,12 +7,13 @@ from app.schemas.cart import CartItemCreate
 
 from app.models.order import Order
 from app.models.order_item import OrderItem
-from app.models.coffee import Coffee
 
 
 from datetime import date
 from app.models.coupon import Coupon
 from app.models.coupon_usage import CouponUsage
+
+from app.core.order_status import PENDING
 
 def add_to_cart(
     db: Session,
@@ -39,6 +40,11 @@ def add_to_cart(
 
     if coffee is None:
         raise ValueError("Coffee not found")
+
+    if cart_item.quantity <= 0:
+        raise ValueError(
+            "Quantity must be greater than 0"
+        )
 
     existing_item = (
         db.query(CartItem)
@@ -221,127 +227,149 @@ def checkout_cart(
         raise ValueError("Cart is empty")
 
     total = 0
-
     discount = 0
-
     coupon = None
 
-    if coupon_code:
+    try:
 
-        coupon = (
-            db.query(Coupon)
-            .filter(
-                Coupon.code == coupon_code
-            )
-            .first()
-        )
+        # -----------------------------
+        # Validate Coupon
+        # -----------------------------
+        if coupon_code:
 
-        if coupon is None:
-            raise ValueError(
-                "Invalid coupon"
+            coupon = (
+                db.query(Coupon)
+                .filter(Coupon.code == coupon_code)
+                .first()
             )
 
-        if coupon.expiry_date < date.today():
-            raise ValueError(
-                "Coupon expired"
+            if coupon is None:
+                raise ValueError("Invalid coupon")
+
+            if coupon.expiry_date < date.today():
+                raise ValueError("Coupon expired")
+
+            used = (
+                db.query(CouponUsage)
+                .filter(
+                    CouponUsage.coupon_id == coupon.id,
+                    CouponUsage.user_id == current_user.id,
+                )
+                .first()
             )
 
-        used = (
-            db.query(CouponUsage)
-            .filter(
-                CouponUsage.coupon_id == coupon.id,
-                CouponUsage.user_id == current_user.id,
-            )
-            .first()
-        )
+            if used:
+                raise ValueError("Coupon already used")
 
-        if used:
-            raise ValueError(
-                "Coupon already used"
-            )
+        # -----------------------------
+        # Validate Stock
+        # -----------------------------
+        for item in cart.items:
 
-    order = Order(
-        user_id=current_user.id,
-        total_amount=0,
-        status="Pending",
-    )
+            coffee = item.coffee
 
-    db.add(order)
-    db.commit()
-    db.refresh(order)
+            if coffee.stock < item.quantity:
+                raise ValueError(
+                    f"Not enough stock for {coffee.name}"
+                )
 
-    for item in cart.items:
-
-        coffee = (
-            db.query(Coffee)
-            .filter(Coffee.id == item.coffee_id)
-            .first()
-        )
-
-        if coffee.stock < item.quantity:
-            raise ValueError(
-                f"Not enough stock for {coffee.name}"
-            )
-
-        coffee.stock -= item.quantity
-
-        subtotal = coffee.price * item.quantity
-
-        total += subtotal
-
-        order_item = OrderItem(
-            order_id=order.id,
-            coffee_id=coffee.id,
-            quantity=item.quantity,
-            price=coffee.price,
-        )
-
-        db.add(order_item)
-
-    order.total_amount = total
-
-    if coupon:
-
-        if coupon.discount_type == "percentage":
-
-            discount = (
-                total * coupon.value
-            ) / 100
-
-        else:
-
-            discount = coupon.value
-
-        if discount > total:
-            discount = total
-
-        order.total_amount = total - discount
-
-        usage = CouponUsage(
-            coupon_id=coupon.id,
+        # -----------------------------
+        # Create Order
+        # -----------------------------
+        order = Order(
             user_id=current_user.id,
+            total_amount=0,
+            status=PENDING,
         )
 
-        db.add(usage)
+        db.add(order)
 
-    (
-        db.query(CartItem)
-        .filter(CartItem.cart_id == cart.id)
-        .delete()
-    )
+        # Generates order.id without committing
+        db.flush()
 
-    db.commit()
-    db.refresh(order)
+        # -----------------------------
+        # Create Order Items
+        # Reduce Stock
+        # -----------------------------
+        for item in cart.items:
 
-    return {
-        "order_id": order.id,
-        "subtotal": total,
-        "discount": discount,
-        "final_total": order.total_amount,
-        "coupon_code": (
-            coupon.code
-            if coupon
-            else None
-        ),
-        "status": order.status,
-    }
+            coffee = item.coffee
+
+            coffee.stock -= item.quantity
+
+            subtotal = coffee.price * item.quantity
+
+            total += subtotal
+
+            order_item = OrderItem(
+                order_id=order.id,
+                coffee_id=coffee.id,
+                quantity=item.quantity,
+                price=coffee.price,
+            )
+
+            db.add(order_item)
+
+        # -----------------------------
+        # Apply Coupon
+        # -----------------------------
+        order.total_amount = total
+
+        if coupon:
+
+            if coupon.discount_type == "percentage":
+
+                discount = (
+                    total * coupon.value
+                ) / 100
+
+            else:
+
+                discount = coupon.value
+
+            if discount > total:
+                discount = total
+
+            order.total_amount = total - discount
+
+            usage = CouponUsage(
+                coupon_id=coupon.id,
+                user_id=current_user.id,
+            )
+
+            db.add(usage)
+
+        # -----------------------------
+        # Clear Cart
+        # -----------------------------
+        (
+            db.query(CartItem)
+            .filter(CartItem.cart_id == cart.id)
+            .delete()
+        )
+
+        # -----------------------------
+        # Save Everything
+        # -----------------------------
+        db.commit()
+
+        db.refresh(order)
+
+        return {
+            "order_id": order.id,
+            "subtotal": total,
+            "discount": discount,
+            "final_total": order.total_amount,
+            "coupon_code": (
+                coupon.code
+                if coupon
+                else None
+            ),
+            "status": order.status,
+        }
+
+    except Exception:
+
+        db.rollback()
+
+        raise

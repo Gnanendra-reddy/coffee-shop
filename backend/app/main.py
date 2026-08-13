@@ -23,6 +23,8 @@ from app.api.coupons import router as coupon_router
 
 from app.api.wishlist import router as wishlist_router
 
+from app.api.inventory import router as inventory_router
+
 # Import models so SQLAlchemy registers them
 from app.models import (
     Coffee,
@@ -71,6 +73,8 @@ app.include_router(analytics_router)
 app.include_router(coupon_router)
 
 app.include_router(wishlist_router)
+
+app.include_router(inventory_router)
 
 @app.get("/")
 def root():

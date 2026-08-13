@@ -8,9 +8,16 @@ from app.db.database import Base
 class Coffee(Base):
     __tablename__ = "coffees"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
-    name = Column(String, nullable=False)
+    name = Column(
+        String, 
+        nullable=False,
+    )
 
     description = Column(String)
 
@@ -18,7 +25,11 @@ class Coffee(Base):
 
     price = Column(Float)
 
-    stock = Column(Integer)
+    stock = Column(
+        Integer,
+        nullable=False,
+        default = 0,
+    )
 
     image_url = Column(String)
 
