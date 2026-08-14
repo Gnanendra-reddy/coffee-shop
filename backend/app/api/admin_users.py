@@ -10,16 +10,20 @@ from sqlalchemy.orm import Session
 from app.core.auth import require_admin
 from app.db.database import get_db
 from app.models.user import User
+
 from app.schemas.user import (
     AdminUserResponse,
     UserActiveStatusUpdate,
     UserRoleUpdate,
 )
 
+from app.schemas.common import (
+    PaginatedUsersResponse,
+)
+
 from app.services.admin_user_service import (
     get_all_users,
     get_user_by_id,
-    search_users,
     set_user_active_status,
     update_user_role,
 )
@@ -33,36 +37,34 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[AdminUserResponse],
+    response_model=PaginatedUsersResponse,
 )
 def all_users(
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
+    search: str | None = None,
+    role: str | None = None,
+    is_active: bool | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(
         require_admin
     ),
 ):
-    return get_all_users(db)
-
-
-
-@router.get(
-    "/search",
-    response_model=list[AdminUserResponse],
-)
-def search(
-    search: str = Query(
-        min_length=1
-    ),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_admin
-    ),
-):
-    return search_users(
-        db,
-        search,
+    return get_all_users(
+        db=db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        role=role,
+        is_active=is_active,
     )
-
 
 
 @router.get(

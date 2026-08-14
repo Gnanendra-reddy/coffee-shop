@@ -16,7 +16,10 @@ class UserResponse(BaseModel):
     phone: str | None = None
     role: str
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

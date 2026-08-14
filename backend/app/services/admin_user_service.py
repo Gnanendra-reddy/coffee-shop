@@ -5,12 +5,57 @@ from app.models.user import User
 
 def get_all_users(
     db: Session,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    role: str | None = None,
+    is_active: bool | None = None,
 ):
-    return (
-        db.query(User)
+    query = db.query(User)
+
+    if search:
+        query = query.filter(
+            (User.full_name.ilike(f"%{search}%"))
+            |
+            (User.email.ilike(f"%{search}%"))
+        )
+
+    if role:
+        query = query.filter(
+            User.role == role
+        )
+
+    if is_active is not None:
+        query = query.filter(
+            User.is_active == is_active
+        )
+
+    total = query.count()
+
+    offset = (page - 1) * page_size
+
+    users = (
+        query
         .order_by(User.id.asc())
+        .offset(offset)
+        .limit(page_size)
         .all()
     )
+
+    total_pages = (
+        (total + page_size - 1)
+        // page_size
+    )
+
+    return {
+        "data": users,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": total_pages,
+        },
+    }
 
 
 def get_user_by_id(

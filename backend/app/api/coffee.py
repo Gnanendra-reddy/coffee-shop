@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -35,23 +36,42 @@ def add_coffee(
 ):
     return create_coffee(db, coffee)
 
-
-@router.get("/", response_model=CoffeeListResponse)
+@router.get("/")
 def get_coffees(
-    page: int = 1,
-    limit: int = 10,
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
     search: str | None = None,
     category: str | None = None,
-    min_price: float | None = None,
-    max_price: float | None = None,
-    sort_by: str = "id",
-    order: str = "asc",
+    min_price: float | None = Query(
+        default=None,
+        ge=0,
+    ),
+    max_price: float | None = Query(
+        default=None,
+        ge=0,
+    ),
+    sort_by: Literal[
+        "id",
+        "name",
+        "price",
+    ] = "id",
+    order: Literal[
+        "asc",
+        "desc",
+    ] = "asc",
     db: Session = Depends(get_db),
 ):
     return get_all_coffees(
         db=db,
         page=page,
-        limit=limit,
+        page_size=page_size,
         search=search,
         category=category,
         min_price=min_price,

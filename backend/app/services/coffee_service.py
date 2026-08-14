@@ -1,10 +1,16 @@
 from sqlalchemy.orm import Session
 
 from app.models.coffee import Coffee
-from app.schemas.coffee import CoffeeCreate, CoffeeUpdate
+from app.schemas.coffee import (
+    CoffeeCreate,
+    CoffeeUpdate,
+)
 
 
-def create_coffee(db: Session, coffee: CoffeeCreate):
+def create_coffee(
+    db: Session,
+    coffee: CoffeeCreate,
+):
     new_coffee = Coffee(
         name=coffee.name,
         description=coffee.description,
@@ -24,7 +30,7 @@ def create_coffee(db: Session, coffee: CoffeeCreate):
 def get_all_coffees(
     db: Session,
     page: int = 1,
-    limit: int = 10,
+    page_size: int = 10,
     search: str | None = None,
     category: str | None = None,
     min_price: float | None = None,
@@ -34,32 +40,45 @@ def get_all_coffees(
 ):
     query = db.query(Coffee)
 
+    # Search by coffee name
     if search:
         query = query.filter(
-            Coffee.name.ilike(f"%{search}%")
+            Coffee.name.ilike(
+                f"%{search}%"
+            )
         )
 
+    # Filter by category
     if category:
         query = query.filter(
             Coffee.category == category
         )
 
+    # Filter by minimum price
     if min_price is not None:
         query = query.filter(
             Coffee.price >= min_price
         )
 
+    # Filter by maximum price
     if max_price is not None:
         query = query.filter(
             Coffee.price <= max_price
         )
 
-    sort_column = getattr(
-        Coffee,
+    # Allow only specific sorting fields
+    allowed_sort_fields = {
+        "id": Coffee.id,
+        "name": Coffee.name,
+        "price": Coffee.price,
+    }
+
+    sort_column = allowed_sort_fields.get(
         sort_by,
         Coffee.id,
     )
 
+    # Sorting
     if order.lower() == "desc":
         query = query.order_by(
             sort_column.desc()
@@ -69,29 +88,49 @@ def get_all_coffees(
             sort_column.asc()
         )
 
+    # Total number of matching coffees
     total = query.count()
 
+    # Calculate offset
+    offset = (
+        page - 1
+    ) * page_size
+
+    # Fetch current page
     coffees = (
-        query.offset((page - 1) * limit)
-        .limit(limit)
+        query
+        .offset(offset)
+        .limit(page_size)
         .all()
     )
 
+    # Calculate total pages
+    total_pages = (
+        (total + page_size - 1)
+        // page_size
+    )
+
     return {
-        "page": page,
-        "limit": limit,
-        "total": total,
         "data": coffees,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": total_pages,
+        },
     }
 
 
-
-def get_coffee_by_id(db: Session, coffee_id: int):
+def get_coffee_by_id(
+    db: Session,
+    coffee_id: int,
+):
     return (
         db.query(Coffee)
         .filter(Coffee.id == coffee_id)
         .first()
     )
+
 
 def update_coffee(
     db: Session,
@@ -137,4 +176,3 @@ def delete_coffee(
     db.commit()
 
     return True
-
