@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+from typing import Literal
 
 class UserCreate(BaseModel):
     full_name: str
@@ -58,3 +59,25 @@ class ChangePasswordRequest(BaseModel):
 
 class DeleteAccountRequest(BaseModel):
     password: str
+
+class AdminUserResponse(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    phone: str | None = None
+    role: str
+    email_verified: bool
+    is_active: bool
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+class UserRoleUpdate(BaseModel):
+    role: Literal[
+        "customer",
+        "admin",
+    ]
+
+class UserActiveStatusUpdate(BaseModel):
+    is_active: bool
