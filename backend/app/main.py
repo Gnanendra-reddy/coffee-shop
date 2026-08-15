@@ -1,6 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.exceptions import AppException
+
+from app.core.exception_handlers import (
+    app_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+    generic_exception_handler,
+)
+
+
 from app.api.users import router as user_router
 from app.db.database import create_tables
 
@@ -41,6 +54,26 @@ from app.models import (
 )
 
 app = FastAPI(title="Coffee Shop API")
+
+app.add_exception_handler(
+    AppException,
+    app_exception_handler,
+)
+
+app.add_exception_handler(
+    StarletteHTTPException,
+    http_exception_handler,
+)
+
+app.add_exception_handler(
+    RequestValidationError,
+    validation_exception_handler,
+)
+
+app.add_exception_handler(
+    Exception,
+    generic_exception_handler,
+)
 
 
 @app.on_event("startup")
