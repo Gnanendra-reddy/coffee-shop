@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -78,7 +79,8 @@ app.add_exception_handler(
 
 @app.on_event("startup")
 def startup():
-    create_tables()
+    if os.getenv("TESTING") != "true":
+        create_tables()
 
 
 origins = [
