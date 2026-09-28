@@ -83,13 +83,22 @@ def startup():
         create_tables()
 
 
+cors_env = os.getenv("CORS_ORIGINS", "")
 origins = [
+    origin.strip() for origin in cors_env.split(",") if origin.strip()
+] if cors_env else [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:80",
+    "http://localhost",
+    "http://127.0.0.1",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins if "*" not in origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -124,6 +133,16 @@ def root():
     return {
         "message": "Coffee Shop API Running"
     }
+
+@app.get(
+    "/health",
+    tags=["Health"],
+)
+def health_check():
+    return {
+        "status": "healthy"
+    }
+
 
 @app.get("/profile")
 def profile(

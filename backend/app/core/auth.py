@@ -86,16 +86,16 @@ def get_current_user(
         .first()
     )
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=403,
-            detail="Account is deactivated",
-        )
-
     if user is None:
         raise HTTPException(
             status_code=401,
             detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Account is deactivated",
         )
 
     return user
